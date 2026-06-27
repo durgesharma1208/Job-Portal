@@ -1,78 +1,109 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Bookmark, BriefcaseBusiness, Search } from "lucide-react";
 import Jobicon from "../components/Jobicon";
-import { Bookmark } from "lucide-react";
-import JobDetailsModal from "../pages/JobDetailsModal"; // 1. Import add karein
-import { useState } from "react";
+import JobDetailsModal from "./JobDetailsModal";
+import Button from "../components/ui/Button";
+import { EmptyState, PageShell, SectionHeader, SkeletonCard } from "../components/ui/Kit";
+import { useAuth } from "../hooks/useAuth";
+import api from "../lib/api";
+
+const getLocalSavedJobs = () => {
+  try {
+    return JSON.parse(localStorage.getItem("savedJobs") || "[]");
+  } catch {
+    return [];
+  }
+};
+
 const SavedJobs = () => {
-  const savedJobs = JSON.parse(localStorage.getItem("savedJobs")) || [];
+  const { user } = useAuth();
+  const [jobsList, setJobsList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedJob, setSelectedJob] = useState(null);
 
-  console.log(savedJobs);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedJob, setSelectedJob] = useState(null);
-  
-    const handleOpenModal = (job) => {
-      setSelectedJob(job);
-      setIsModalOpen(true);
+  useEffect(() => {
+    const fetchSavedJobs = async () => {
+      if (!user) {
+        setJobsList(getLocalSavedJobs());
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const res = await api.get("/user/me");
+        if (res.data.success && res.data.user) {
+          const validJobs = (res.data.user.savedJobs || []).filter(
+            (job) => job && typeof job === "object"
+          );
+          setJobsList(validJobs);
+          localStorage.setItem("savedJobs", JSON.stringify(validJobs));
+        }
+      } catch {
+        setJobsList(getLocalSavedJobs());
+      } finally {
+        setLoading(false);
+      }
     };
+
+    fetchSavedJobs();
+  }, [user]);
+
+  const handleRemoveFromUI = (id) => {
+    setJobsList((prev) => prev.filter((job) => job._id !== id));
+  };
+
   return (
-    <div className="relative min-h-[calc(100vh-100px)] bg-gradient-to-br from-slate-950 via-gray-900 to-black px-6 py-10">
-      {/* Decorative blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-40 right-40 w-80 h-80 bg-green-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-40 left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
-      </div>
+    <PageShell wide>
+      <SectionHeader
+        eyebrow="Saved jobs"
+        title="Your curated"
+        highlight="shortlist"
+        description={`You have ${jobsList.length} role${jobsList.length === 1 ? "" : "s"} saved for deeper review.`}
+        actions={
+          <Link to="/jobs">
+            <Button leftIcon={Search}>Browse more</Button>
+          </Link>
+        }
+      />
 
-      <div className="relative max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-12">
-          <div className="flex items-center gap-3 mb-3">
-            <Bookmark className="text-green-400" size={32} />
-            <h1 className="text-5xl font-bold text-white">
-              Saved{" "}
-              <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
-                Jobs
-              </span>
-            </h1>
-          </div>
-          <p className="text-gray-400 text-lg">
-            You have saved {savedJobs.length} job
-            {savedJobs.length !== 1 ? "s" : ""}
-          </p>
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <SkeletonCard key={index} />
+          ))}
         </div>
-
-        {/* Jobs Grid or Empty State */}
-        {savedJobs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {savedJobs.map((job) => (
-              <Jobicon key={job.id} job={job} onDetailsClick={() => handleOpenModal(job)} />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Bookmark size={64} className="text-gray-600 mb-4" />
-            <h2 className="text-2xl font-bold text-gray-300 mb-2">
-              No Saved Jobs Yet
-            </h2>
-            <p className="text-gray-500 mb-8 text-center">
-              Start saving jobs to view them here later
-            </p>
-            <a
-              href="/jobs"
-              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 px-8 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg shadow-green-500/30"
-            >
-              Browse Jobs
-            </a>
-          </div>
-        )}
-      </div>
-            {/* Modal renders conditionally */}
-      {selectedJob && (
-        <JobDetailsModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
-          job={selectedJob} 
+      ) : jobsList.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {jobsList.map((job, index) => (
+            <Jobicon
+              key={job._id || `saved-${index}`}
+              job={job}
+              onDetailsClick={() => setSelectedJob(job)}
+              onUnsaveSuccess={handleRemoveFromUI}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={Bookmark}
+          title="No saved jobs yet"
+          description="Build a shortlist of roles worth revisiting before you apply."
+          action={
+            <Link to="/jobs">
+              <Button leftIcon={BriefcaseBusiness}>Browse jobs</Button>
+            </Link>
+          }
         />
       )}
-    </div>
+
+      <JobDetailsModal
+        isOpen={Boolean(selectedJob)}
+        onClose={() => setSelectedJob(null)}
+        job={selectedJob || {}}
+      />
+    </PageShell>
   );
 };
 

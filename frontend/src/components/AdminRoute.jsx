@@ -1,12 +1,9 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { PageLoader } from "./ui/Kit";
 
-const AdminRoute = ({ user, loading, children }) => {
+const AdminRoute = ({ user, loading }) => {
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
+    return <PageLoader label="Opening admin controls..." />;
   }
 
   if (!user) {
@@ -14,10 +11,10 @@ const AdminRoute = ({ user, loading, children }) => {
   }
 
   if (user.role !== "admin") {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/home" replace />;
   }
 
-  return children;
+  return <Outlet />;
 };
 
 export default AdminRoute;

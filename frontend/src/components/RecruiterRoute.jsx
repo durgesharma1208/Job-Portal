@@ -1,16 +1,9 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { PageLoader } from "./ui/Kit";
 
-const RecruiterRoute = ({
-  user,
-  loading,
-  children,
-}) => {
+const RecruiterRoute = ({ user, loading }) => {
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...ttp://localhost:5173/
-      </div>
-    );
+    return <PageLoader label="Preparing recruiter tools..." />;
   }
 
   if (!user) {
@@ -18,10 +11,10 @@ const RecruiterRoute = ({
   }
 
   if (user.role !== "recruiter") {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/home" replace />;
   }
 
-  return children;
+  return <Outlet />;
 };
 
 export default RecruiterRoute;

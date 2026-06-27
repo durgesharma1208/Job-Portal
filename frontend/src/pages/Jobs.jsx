@@ -1,65 +1,157 @@
+import { useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { BriefcaseBusiness, Filter, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
 import Jobicon from "../components/Jobicon";
-import JobDetailsModal from "../pages/JobDetailsModal"; // 1. Import add karein
-import { useState, useEffect } from "react";
-import axios from "axios";
+import JobDetailsModal from "./JobDetailsModal";
+import Button from "../components/ui/Button";
+import {
+  Alert,
+  Badge,
+  EmptyState,
+  PageShell,
+  SearchInput,
+  SectionHeader,
+  SelectInput,
+  SkeletonCard,
+} from "../components/ui/Kit";
+import { filterJobs, useJobs } from "../hooks/useJobs";
+
+const categoryChips = ["All", "Remote", "Full Time", "Hybrid", "Internship", "Contract"];
+const PAGE_SIZE = 9;
+
 const Jobs = () => {
-  // 2. State sirf ek baar declare karein
-  const [jobs, setJobs] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { jobs, loading, error, usingFallback, meta } = useJobs();
+  const [query, setQuery] = useState("");
+  const [type, setType] = useState("All");
+  const [level, setLevel] = useState("All");
+  const [location, setLocation] = useState("All");
+  const [page, setPage] = useState(1);
   const [selectedJob, setSelectedJob] = useState(null);
 
-  const handleOpenModal = (job) => {
-    setSelectedJob(job);
-    setIsModalOpen(true);
+  const filteredJobs = useMemo(
+    () => filterJobs(jobs, { query, type, level, location }),
+    [jobs, query, type, level, location]
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE));
+  const visibleJobs = filteredJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const resetFilters = () => {
+    setQuery("");
+    setType("All");
+    setLevel("All");
+    setLocation("All");
+    setPage(1);
   };
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/job");
-        setJobs(response.data);
-      } catch (error) {
-        console.error("Error fetching jobs:", error);
-      }
-    };
-    fetchJobs();
-  }, []);
+  const updateFilter = (setter) => (value) => {
+    setter(value);
+    setPage(1);
+  };
 
   return (
-    <div className="relative min-h-[calc(100vh-100px)] bg-gradient-to-br from-slate-950 via-gray-900 to-black px-6 py-10">
-      {/* Decorative blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-40 right-40 w-80 h-80 bg-green-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-40 left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
-      </div>
+    <PageShell wide>
+      <SectionHeader
+        eyebrow="Browse jobs"
+        title="Find your next"
+        highlight="high-leverage role"
+        description={`${filteredJobs.length} curated openings across modern product and engineering teams.`}
+        actions={<Badge tone="green">{usingFallback ? "demo catalog" : "live catalog"}</Badge>}
+      />
 
-      <div className="relative max-w-7xl mx-auto">
-        <div className="mb-12">
-          <h1 className="text-5xl font-bold text-white mb-3">
-            Explore <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">Opportunities</span>
-          </h1>
-          <p className="text-gray-400 text-lg">
-            Discover {jobs.length} amazing job openings from top companies
-          </p>
+      <section className="surface-card mb-6 p-4 sm:p-5">
+        <div className="grid gap-3 lg:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_auto]">
+          <SearchInput
+            value={query}
+            onChange={(event) => updateFilter(setQuery)(event.target.value)}
+            placeholder="Search role, company, skill, or city"
+          />
+          <SelectInput value={type} onChange={(event) => updateFilter(setType)(event.target.value)} aria-label="Job type">
+            {meta.types.map((item) => (
+              <option key={item} value={item}>{item}</option>
+            ))}
+          </SelectInput>
+          <SelectInput value={level} onChange={(event) => updateFilter(setLevel)(event.target.value)} aria-label="Experience level">
+            {meta.levels.map((item) => (
+              <option key={item} value={item}>{item}</option>
+            ))}
+          </SelectInput>
+          <SelectInput value={location} onChange={(event) => updateFilter(setLocation)(event.target.value)} aria-label="Location">
+            {meta.locations.map((item) => (
+              <option key={item} value={item}>{item}</option>
+            ))}
+          </SelectInput>
+          <Button variant="secondary" leftIcon={RotateCcw} onClick={resetFilters}>
+            Reset
+          </Button>
         </div>
 
-        {/* Jobs Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {jobs.map((job) => (
-            <Jobicon key={job._id} job={job} onDetailsClick={() => handleOpenModal(job)} />
+        <div className="mt-4 flex flex-wrap gap-2">
+          {categoryChips.map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => {
+                setType(chip === "Remote" ? "All" : chip);
+                setLocation(chip === "Remote" ? "Remote" : "All");
+                setPage(1);
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-border-soft px-3 py-1.5 text-xs font-black text-text-muted transition hover:border-primary/35 hover:bg-[var(--primary-soft)] hover:text-primary"
+            >
+              <Filter className="size-3.5" />
+              {chip}
+            </button>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Modal renders conditionally */}
-      {selectedJob && (
-        <JobDetailsModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
-          job={selectedJob} 
+      {error && <Alert className="mb-6">{error}</Alert>}
+
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <SkeletonCard key={index} />
+          ))}
+        </div>
+      ) : visibleJobs.length === 0 ? (
+        <EmptyState
+          icon={SlidersHorizontal}
+          title="No matching roles"
+          description="Try removing a filter or searching for a broader role family."
+          action={<Button onClick={resetFilters}>Clear filters</Button>}
         />
+      ) : (
+        <>
+          <motion.div layout className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <AnimatePresence>
+              {visibleJobs.map((job) => (
+                <Jobicon key={job._id} job={job} onDetailsClick={() => setSelectedJob(job)} />
+              ))}
+            </AnimatePresence>
+          </motion.div>
+
+          <div className="mt-8 flex flex-col items-center justify-between gap-3 rounded-lg border border-border-soft bg-surface p-3 sm:flex-row">
+            <p className="text-sm font-semibold text-text-muted">
+              Page {page} of {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <Button variant="secondary" disabled={page === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+                Previous
+              </Button>
+              <Button disabled={page === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>
+                Next
+              </Button>
+            </div>
+          </div>
+        </>
       )}
-    </div>
+
+      <JobDetailsModal
+        isOpen={Boolean(selectedJob)}
+        onClose={() => setSelectedJob(null)}
+        job={selectedJob || {}}
+      />
+    </PageShell>
   );
 };
 

@@ -1,22 +1,16 @@
-import toast from "react-hot-toast";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { PageLoader } from "./ui/Kit";
 
-const ProtectedRoute = ({ user, loading, children }) => {
-  toast.success("good job")
+const ProtectedRoute = ({ user, loading }) => {
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
+    return <PageLoader label="Checking your workspace..." />;
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-
-  return children;
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

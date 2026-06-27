@@ -22,12 +22,4 @@ router.post(
   jobController.addJob
 );
 
-// Student Only
-router.post(
-  "/save/:jobId",
-  userAuth,
-  roleAuth("student"),
-  jobController.saveJobForUser
-);
-
 module.exports = router;

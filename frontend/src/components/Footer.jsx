@@ -1,100 +1,74 @@
-import { Heart, Link, Code2, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
+import { BriefcaseBusiness, Code2, GitBranch, Mail } from "lucide-react";
 
-const Footer = () => {
-  return (
-    <footer className="bg-gradient-to-r from-slate-900 via-gray-900 to-slate-900 border-t border-white/10 text-gray-300 py-12 ">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent mb-3">
-              JobSearch
-            </h3>
-            <p className="text-gray-400 text-sm">
-              Your gateway to premium job opportunities
-            </p>
-          </div>
+const groups = [
+  {
+    title: "Product",
+    links: [
+      { label: "Browse Jobs", path: "/jobs" },
+      { label: "Search", path: "/search" },
+      { label: "Tracker", path: "/application-tracker" },
+    ],
+  },
+  {
+    title: "Workspaces",
+    links: [
+      { label: "Recruiters", path: "/RecruiterHome" },
+      { label: "Admin", path: "/AdminHome" },
+      { label: "Settings", path: "/settings" },
+    ],
+  },
+];
 
-          <div>
-            <h4 className="font-semibold text-white mb-4">Quick Links</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a
-                  href="/home"
-                  className="hover:text-green-400 transition-colors"
-                >
-                  Home
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/jobs"
-                  className="hover:text-green-400 transition-colors"
-                >
-                  Browse Jobs
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/saved-jobs"
-                  className="hover:text-green-400 transition-colors"
-                >
-                  Saved Jobs
-                </a>
-              </li>
-            </ul>
-          </div>
+const Footer = () => (
+  <footer className="border-t border-border-soft bg-bg px-4 py-10 sm:px-6">
+    <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-[1.5fr_1fr_1fr_0.8fr]">
+      <div>
+        <Link to="/home" className="inline-flex items-center gap-2 text-lg font-black text-text-strong">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-contrast">
+            <BriefcaseBusiness className="size-5" />
+          </span>
+          JobSearch
+        </Link>
+        <p className="mt-4 max-w-sm text-sm leading-6 text-text-muted">
+          A premium job portal for candidates, hiring teams, and platform operators.
+        </p>
+      </div>
 
-          <div>
-            <h4 className="font-semibold text-white mb-4">Resources</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a href="#" className="hover:text-green-400 transition-colors">
-                  Blog
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-green-400 transition-colors">
-                  Career Tips
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-green-400 transition-colors">
-                  FAQ
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-white mb-4">Connect</h4>
-            <div className="flex gap-4">
-              <a href="#" className="hover:text-green-400 transition-colors">
-                <Link size={20} />
-              </a>
-              <a href="#" className="hover:text-green-400 transition-colors">
-                <Code2 size={20} />
-              </a>
-              <a href="#" className="hover:text-green-400 transition-colors">
-                <Mail size={20} />
-              </a>
-            </div>
+      {groups.map((group) => (
+        <div key={group.title}>
+          <h3 className="text-sm font-black text-text-strong">{group.title}</h3>
+          <div className="mt-4 grid gap-2">
+            {group.links.map((link) => (
+              <Link key={link.path} to={link.path} className="text-sm font-medium text-text-muted hover:text-primary">
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
+      ))}
 
-        <div className="border-t border-white/10 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-400 mb-4 md:mb-0">
-              © 2024 MyApp. All rights reserved.
-            </p>
-            <p className="text-sm text-gray-400 flex items-center gap-2">
-              Made with <Heart size={16} className="text-red-500" /> for job
-              seekers
-            </p>
-          </div>
+      <div>
+        <h3 className="text-sm font-black text-text-strong">Connect</h3>
+        <div className="mt-4 flex gap-2">
+          {[GitBranch, Code2, Mail].map((Icon, index) => (
+            <a
+              key={index}
+              href="#"
+              className="inline-flex size-10 items-center justify-center rounded-lg border border-border-soft text-text-muted hover:bg-surface-hover hover:text-primary"
+              aria-label="Social link"
+            >
+              <Icon className="size-4" />
+            </a>
+          ))}
         </div>
       </div>
-    </footer>
-  );
-};
+    </div>
+    <div className="mx-auto mt-8 flex max-w-7xl flex-col gap-2 border-t border-border-soft pt-6 text-xs font-medium text-text-subtle sm:flex-row sm:items-center sm:justify-between">
+      <span>2026 JobSearch. All rights reserved.</span>
+      <span>Designed for focused hiring workflows.</span>
+    </div>
+  </footer>
+);
 
 export default Footer;

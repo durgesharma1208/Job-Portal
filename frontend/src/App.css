@@ -1,2 +1,1 @@
-@import "tailwindcss";
-
+/* Legacy file — styles now live in index.css design system. Kept empty to avoid a double `@import "tailwindcss"`. */

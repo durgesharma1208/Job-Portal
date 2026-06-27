@@ -1,144 +1,153 @@
-import { MapPin, Clock, Bookmark, Info } from "lucide-react";
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Bookmark, BriefcaseBusiness, Clock, Info, MapPin, Send } from "lucide-react";
 import { toast } from "react-hot-toast";
+import Button from "./ui/Button";
+import { Avatar, Badge } from "./ui/Kit";
+import api from "../lib/api";
 
-const Jobicon = ({ job, onDetailsClick }) => {
-  // State for Saving Job
-  const [isSaved, setIsSaved] = useState(() => {
-    const savedJobs = JSON.parse(localStorage.getItem("savedJobs")) || [];
-    return savedJobs.some((item) => item._id === job._id);
-  });
+const getStoredJobs = (key) => {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "[]");
+  } catch {
+    return [];
+  }
+};
 
-  // State for Applying Job
-  const [isApplied, setIsApplied] = useState(() => {
-    const appliedJobs = JSON.parse(localStorage.getItem("AppliedJobs")) || [];
-    return appliedJobs.some((item) => item._id === job._id);
-  });
+const Jobicon = ({ job, onDetailsClick, onUnsaveSuccess }) => {
+  const [isSaved, setIsSaved] = useState(() =>
+    getStoredJobs("savedJobs").some((item) => item._id === job._id)
+  );
+  const [isApplied, setIsApplied] = useState(() =>
+    getStoredJobs("AppliedJobs").some((item) => item._id === job._id)
+  );
+  const [saving, setSaving] = useState(false);
+  const [applying, setApplying] = useState(false);
 
-  // Handle Save / Unsave
-  const handleSaveToggle = () => {
-    const savedJobs = JSON.parse(localStorage.getItem("savedJobs")) || [];
+  const handleSaveToggle = async () => {
+    setSaving(true);
+    try {
+      const res = await api.post(`/user/save/${job._id}`, {});
 
-    if (isSaved) {
-      // Unsave Logic
-      const filteredJobs = savedJobs.filter((item) => item._id !== job._id);
-      localStorage.setItem("savedJobs", JSON.stringify(filteredJobs));
-      setIsSaved(false);
-      toast.success("Job Unsaved!");
-    } else {
-      // Save Logic
-      savedJobs.push(job);
-      localStorage.setItem("savedJobs", JSON.stringify(savedJobs));
-      setIsSaved(true);
-      toast.success("Job Saved Successfully!");
+      if (res.data.success) {
+        const savedJobs = getStoredJobs("savedJobs");
+
+        if (isSaved) {
+          const filteredJobs = savedJobs.filter((item) => item._id !== job._id);
+          localStorage.setItem("savedJobs", JSON.stringify(filteredJobs));
+          setIsSaved(false);
+          toast.success("Removed from saved jobs");
+          onUnsaveSuccess?.(job._id);
+        } else {
+          localStorage.setItem("savedJobs", JSON.stringify([...savedJobs, job]));
+          setIsSaved(true);
+          toast.success("Saved to your shortlist");
+        }
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to update saved jobs");
+    } finally {
+      setSaving(false);
     }
   };
 
-  // Handle Apply
-  const handleApply = () => {
-    const appliedJobs = JSON.parse(localStorage.getItem("AppliedJobs")) || [];
-
+  const handleApply = async () => {
     if (isApplied) {
-      toast.error("You have already applied for this job!");
-    } else {
-      // Apply Logic
-      appliedJobs.push(job);
-      localStorage.setItem("AppliedJobs", JSON.stringify(appliedJobs));
-      setIsApplied(true);
-      toast.success("Application Submitted successfully!");
+      toast.error("You already applied for this role");
+      return;
     }
-  }; // Fixed the extra closing brace that broke your original code
+
+    setApplying(true);
+    try {
+      const res = await api.post(`/user/apply/${job._id}`, {});
+
+      if (res.data.success) {
+        const appliedJobs = getStoredJobs("AppliedJobs");
+        localStorage.setItem("AppliedJobs", JSON.stringify([...appliedJobs, job]));
+        setIsApplied(true);
+        toast.success(res.data.message || "Application submitted");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Application failed");
+    } finally {
+      setApplying(false);
+    }
+  };
 
   return (
-    <div className="w-full min-h-[380px] bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 flex flex-col justify-between shadow-lg hover:shadow-2xl border border-gray-100 transition-all duration-300 hover:scale-[1.02] hover:border-green-200">
-      {/* top */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center border-2 border-gray-200 shadow-md">
-          <img
-            className="w-8 h-8 object-contain"
-            src={job.logo}
-            alt={job.company}
-          />
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4 }}
+      transition={{ type: "spring", stiffness: 280, damping: 24 }}
+      className="interactive-card flex min-h-[360px] flex-col p-5"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Avatar src={job.logo} name={job.company} className="size-12 bg-white" />
+          <div>
+            <h3 className="font-black text-text-strong">{job.company}</h3>
+            <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-text-subtle">
+              <Clock className="size-3.5" />
+              {job.posted}
+            </p>
+          </div>
         </div>
 
         <button
-          className={`flex items-center gap-1 border-2 px-4 py-2 rounded-lg text-sm transition-all duration-300 font-semibold hover:scale-105 ${
-            isSaved
-              ? "bg-green-600 border-green-600 text-white"
-              : "bg-white border-green-400 text-green-600 hover:bg-green-50"
-          }`}
+          type="button"
           onClick={handleSaveToggle}
+          disabled={saving}
+          className="inline-flex size-10 items-center justify-center rounded-lg border border-border-soft text-text-muted transition hover:border-primary/40 hover:bg-[var(--primary-soft)] hover:text-primary disabled:opacity-60"
+          aria-label={isSaved ? "Remove saved job" : "Save job"}
         >
-          <Bookmark size={16} />
-          {isSaved ? "Saved" : "Save"}
+          <Bookmark className={isSaved ? "size-5 fill-primary text-primary" : "size-5"} />
         </button>
       </div>
 
-      {/* content */}
-      <div className="flex-grow mb-5">
-        <div className="flex items-center gap-2 mb-2">
-          <h3 className="text-lg font-bold text-gray-800">{job.company}</h3>
-
-          <span className="text-gray-400 text-sm flex items-center gap-1">
-            <Clock size={14} />
-            {job.posted}
-          </span>
-        </div>
-
-        <h1 className="text-2xl md:text-3xl font-bold leading-tight text-gray-900 mb-4">
-          {job.role}
-        </h1>
-
-        <div className="flex gap-2 flex-wrap mb-4">
-          <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-sm font-semibold">
+      <div className="mt-6 flex-1">
+        <div className="mb-3 flex flex-wrap gap-2">
+          <Badge tone="blue">
+            <BriefcaseBusiness className="size-3.5" />
             {job.type}
-          </span>
-
-          <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg text-sm font-semibold">
-            {job.level}
-          </span>
+          </Badge>
+          <Badge tone="violet">{job.level}</Badge>
         </div>
+
+        <h2 className="text-2xl font-black leading-tight tracking-tight text-text-strong">
+          {job.role}
+        </h2>
+
+        <p className="mt-4 flex items-center gap-2 text-sm font-semibold text-text-muted">
+          <MapPin className="size-4 text-primary" />
+          {job.location}
+        </p>
       </div>
 
-      {/* line */}
-      <div className="w-full h-px bg-gray-200 my-4"></div>
-
-      {/* bottom */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-green-600 mb-1">
-            {job.salary}
-          </h2>
-
-          <p className="text-gray-500 text-sm flex items-center gap-1">
-            <MapPin size={14} />
-            {job.location}
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={onDetailsClick}
-            className="flex items-center gap-2 border-2 border-blue-500 text-blue-600 px-4 py-3 rounded-xl font-semibold hover:bg-blue-50"
-          >
-            <Info size={18} />
-            Details
-          </button>
-
-          <button
-            onClick={handleApply}
-           
-            className={`px-5 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg ${
-              isApplied
-                ? "bg-gray-400 text-white cursor-not-allowed shadow-none"
-                : "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:scale-105 shadow-green-500/20"
-            }`}
-          >
-            {isApplied ? "Applied" : "Apply"}
-          </button>
+      <div className="mt-6 border-t border-border-soft pt-5">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-faint">Salary</p>
+            <p className="mt-1 text-xl font-black text-primary">{job.salary}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" leftIcon={Info} onClick={onDetailsClick}>
+              Details
+            </Button>
+            <Button
+              size="sm"
+              leftIcon={Send}
+              loading={applying}
+              disabled={isApplied}
+              onClick={handleApply}
+            >
+              {isApplied ? "Applied" : "Apply"}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </motion.article>
   );
 };
 

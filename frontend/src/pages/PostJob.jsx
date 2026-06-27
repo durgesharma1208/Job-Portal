@@ -1,50 +1,50 @@
 import { useState } from "react";
-import axios from "axios";
+import toast from "react-hot-toast";
+import api from "../lib/api";
+import Button from "../components/ui/Button";
+import {
+  Alert,
+  Field,
+  PageShell,
+  SectionHeader,
+  SelectInput,
+  TextInput,
+} from "../components/ui/Kit";
 
 const PostJob = () => {
-  // 1. Initial State as per your exact Schema Model
   const [jobData, setJobData] = useState({
     company: "",
     logo: "",
-    posted: "Just Now", // Default baseline value
+    posted: "Just now",
     role: "",
-    type: "Full Time",   // Default dropdown value
-    level: "Entry Level", // Default dropdown value
+    type: "Full Time",
+    level: "Entry Level",
     salary: "",
     location: "",
   });
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const [error, setError] = useState("");
 
-  // 2. Generic Input Change Handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setJobData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 3. Form Submit Handler (API Integration)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage({ type: "", text: "" });
+    setError("");
 
     try {
-      // Axios POST request to your endpoint with credentials
-      const response = await axios.post(
-        "http://localhost:5000/api/job/",
-        jobData,
-        { withCredentials: true }
-      );
+      const response = await api.post("/job/", jobData);
 
       if (response.data.success || response.status === 201) {
-        setMessage({ type: "success", text: "Job Posted Successfully! 🎉" });
-        // Reset form after successful post
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        toast.success("Job published successfully");
         setJobData({
           company: "",
           logo: "",
-          posted: "Just Now",
+          posted: "Just now",
           role: "",
           type: "Full Time",
           level: "Entry Level",
@@ -53,118 +53,74 @@ const PostJob = () => {
         });
       }
     } catch (error) {
-      console.error("Error creating job:", error);
-      setMessage({
-        type: "error",
-        text: error.response?.data?.message || "Failed to post job. Try again.",
-      });
+      setError(error.response?.data?.message || "Failed to post job.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black text-white py-12 px-4 md:px-10 relative overflow-hidden">
-      {/* Background Glow Ambiance */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
-      </div>
+    <PageShell>
+      <SectionHeader
+        eyebrow="Post a job"
+        title="Create a new"
+        highlight="opening"
+        description="Publish a role to attract top-tier talent through the platform."
+      />
 
-      <div className="relative max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight">
-            Post New <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">Job Opportunity</span>
-          </h1>
-          <p className="text-gray-400">Create and publish roles to find the finest tech talent.</p>
-        </div>
+      {error && <Alert type="error" className="mb-6">{error}</Alert>}
 
-        {/* Alert Messages */}
-        {message.text && (
-          <div className={`p-4 rounded-xl mb-6 text-center font-medium ${
-            message.type === "success" ? "bg-green-500/10 text-green-400 border border-green-500/20" : "bg-red-500/10 text-red-400 border border-red-500/20"
-          }`}>
-            {message.text}
-          </div>
-        )}
-
-        {/* main Form Card */}
-        <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 backdrop-blur-md p-6 md:p-8 rounded-2xl shadow-2xl space-y-6">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Company Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
-              <input type="text" name="company" value={jobData.company} onChange={handleChange} required placeholder="e.g., Google" className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-400 transition" />
-            </div>
-
-            {/* Logo URL */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Logo Image URL</label>
-              <input type="url" name="logo" value={jobData.logo} onChange={handleChange} placeholder="e.g., https://logo.clearbit.com/google.com" className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-400 transition" />
-            </div>
+      <div className="surface-card mx-auto max-w-3xl p-5 sm:p-7">
+        <form onSubmit={handleSubmit} className="grid gap-5">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Company name">
+              <TextInput name="company" value={jobData.company} onChange={handleChange} required placeholder="e.g. Google" />
+            </Field>
+            <Field label="Logo URL">
+              <TextInput name="logo" value={jobData.logo} onChange={handleChange} placeholder="https://logo.clearbit.com/google.com" />
+            </Field>
           </div>
 
-          {/* Job Role Title */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Job Role / Title</label>
-            <input type="text" name="role" value={jobData.role} onChange={handleChange} required placeholder="e.g., Software Development Engineer" className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-400 transition" />
-          </div>
+          <Field label="Job title">
+            <TextInput name="role" value={jobData.role} onChange={handleChange} required placeholder="e.g. Frontend Engineer" />
+          </Field>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Job Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Job Type</label>
-              <select name="type" value={jobData.type} onChange={handleChange} className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-400 transition">
+          <div className="grid gap-5 sm:grid-cols-3">
+            <Field label="Job type">
+              <SelectInput name="type" value={jobData.type} onChange={handleChange}>
                 <option value="Full Time">Full Time</option>
                 <option value="Part Time">Part Time</option>
                 <option value="Internship">Internship</option>
                 <option value="Contract">Contract</option>
-              </select>
-            </div>
-
-            {/* Job Level */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Experience Level</label>
-              <select name="level" value={jobData.level} onChange={handleChange} className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-400 transition">
+              </SelectInput>
+            </Field>
+            <Field label="Experience level">
+              <SelectInput name="level" value={jobData.level} onChange={handleChange}>
                 <option value="Entry Level">Entry Level</option>
                 <option value="Mid Level">Mid Level</option>
                 <option value="Senior Level">Senior Level</option>
-              </select>
-            </div>
-
-            {/* Posted Timeline */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Posted Timeline</label>
-              <input type="text" name="posted" value={jobData.posted} onChange={handleChange} required placeholder="e.g., 2 days ago" className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-400 transition" />
-            </div>
+              </SelectInput>
+            </Field>
+            <Field label="Posted">
+              <TextInput name="posted" value={jobData.posted} onChange={handleChange} required placeholder="e.g. 2 days ago" />
+            </Field>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Salary */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Salary Package</label>
-              <input type="text" name="salary" value={jobData.salary} onChange={handleChange} required placeholder="e.g., 18 LPA" className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-400 transition" />
-            </div>
-
-            {/* Location */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
-              <input type="text" name="location" value={jobData.location} onChange={handleChange} required placeholder="e.g., Bangalore, India" className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-400 transition" />
-            </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Salary">
+              <TextInput name="salary" value={jobData.salary} onChange={handleChange} required placeholder="e.g. $80/hour" />
+            </Field>
+            <Field label="Location">
+              <TextInput name="location" value={jobData.location} onChange={handleChange} required placeholder="e.g. Bangalore, India" />
+            </Field>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full block mx-auto bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-[1.02] active:scale-[0.98] text-white font-bold py-3.5 px-6 rounded-xl transition duration-300 shadow-lg shadow-green-500/20 disabled:opacity-50 disabled:pointer-events-none"
-          >
-            {loading ? "Publishing Job..." : "Publish Job Opportunity"}
-          </button>
+          <Button type="submit" fullWidth size="lg" loading={loading}>
+            {loading ? "Publishing..." : "Publish job"}
+          </Button>
         </form>
       </div>
-    </div>
+    </PageShell>
   );
 };
 

@@ -1,17 +1,15 @@
 import { createContext, useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import api from "../lib/api";
 
 const AuthContext = createContext();
-
-axios.defaults.withCredentials = true;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
- 
+
   const fetchCurrentUser = useCallback(async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/user/me");
+      const res = await api.get("/user/me");
 
       setUser(res.data.user);
     } catch(error) {
@@ -43,5 +41,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
 export default AuthContext;
+

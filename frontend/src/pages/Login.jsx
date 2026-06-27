@@ -1,219 +1,133 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { Lock, Mail, User } from "lucide-react";
+import AuthLayout from "../components/AuthLayout";
+import Button from "../components/ui/Button";
+import { Field, SelectInput, TextInput } from "../components/ui/Kit";
+import { useAuth } from "../hooks/useAuth";
+import api from "../lib/api";
+
+const roleDestinations = {
+  admin: "/AdminHome",
+  recruiter: "/RecruiterHome",
+  student: "/home",
+};
+
 const Login = () => {
   const navigate = useNavigate();
-
+  const { setUser } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [formData, setData] = useState({
     name: "",
     email: "",
     password: "",
-    role: "",
+    role: "student",
   });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setData((prev) => ({ ...prev, [name]: value }));
   };
 
- const onSubmit = async (e) => {
-  e.preventDefault();
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
 
-  try {
-    console.log("Sending:", formData);
-
-    const response = await axios.post(
-      "http://localhost:5000/api/user/login",
-      {
+    try {
+      const response = await api.post("/user/login", {
         name: formData.name.trim(),
         email: formData.email.trim(),
         password: formData.password,
-      },{ withCredentials: true }
-    );
+        role: formData.role,
+      });
 
-    console.log("Login Success:", response.data);
+      const nextUser = response.data.user;
+      setUser(nextUser);
+      localStorage.setItem("user", JSON.stringify(nextUser));
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+      }
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify(response.data.user)
-    );
-
-    localStorage.setItem(
-      "token",
-      response.data.token
-    );
-
-    const role =
-      response.data.user.role;
-
-    switch (role) {
-      case "admin":
-        navigate("/AdminHome");
-        break;
-
-      case "recruiter":
-        navigate("/RecruiterHome");
-        break;
-
-      default:
-        navigate("/home");
+      toast.success("Welcome back");
+      navigate(roleDestinations[nextUser.role] || "/home");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to sign in.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-  } catch (error) {
-    console.error("Login Error:", error);
+  return (
+    <AuthLayout
+      eyebrow="Welcome back"
+      title="Sign in to JobSearch"
+      subtitle="Continue to your tailored hiring workspace."
+    >
+      <form onSubmit={onSubmit} className="grid gap-4">
+        <Field label="Full name">
+          <TextInput
+            leftIcon={User}
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Aarav Mehta"
+            required
+          />
+        </Field>
 
-    if (error.response) {
-      console.log(
-        "Backend Error:",
-        error.response.data
-      );
+        <Field label="Email address">
+          <TextInput
+            leftIcon={Mail}
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="you@company.com"
+            required
+          />
+        </Field>
 
-      alert(
-        error.response.data.message ||
-        "Login Failed"
-      );
-    }
-    else if (error.request) {
-      alert(
-        "Server is not responding."
-      );
-    }
-    else {
-      alert(
-        "Something went wrong."
-      );
-    }
-  }
+        <Field label="Password">
+          <TextInput
+            leftIcon={Lock}
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="Enter password"
+            required
+          />
+        </Field>
+
+        <Field label="Workspace">
+          <SelectInput name="role" value={formData.role} onChange={handleChange} required>
+            <option value="student">Candidate</option>
+            <option value="recruiter">Recruiter</option>
+            <option value="admin">Admin</option>
+          </SelectInput>
+        </Field>
+
+        <div className="flex items-center justify-between text-sm">
+          <Link to="/forgot-password" className="font-semibold text-primary hover:text-primary-hover">
+            Forgot password?
+          </Link>
+        </div>
+
+        <Button type="submit" fullWidth size="lg" loading={loading}>
+          Login
+        </Button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-text-muted">
+        New here?{" "}
+        <Link to="/register" className="font-bold text-primary hover:text-primary-hover">
+          Create an account
+        </Link>
+      </p>
+    </AuthLayout>
+  );
 };
-
-
-return (
-  <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-black flex items-center justify-center px-4">
-
-    {/* Background Effects */}
-    <div className="absolute inset-0 overflow-hidden">
-      <div className="absolute top-20 left-20 w-72 h-72 bg-green-500/20 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-20 right-20 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl"></div>
-    </div>
-
-    <div className="relative w-full max-w-md">
-
-      <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
-
-        {/* Heading */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white">
-            Welcome Back
-          </h1>
-
-          <p className="text-gray-300 mt-2">
-            Sign in to your account
-          </p>
-        </div>
-
-        <form onSubmit={onSubmit} className="space-y-5">
-
-          {/* Full Name */}
-          <div>
-            <label className="block text-gray-300 mb-2">
-              Full Name
-            </label>
-
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter your full name"
-              required
-              className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-green-500"
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-gray-300 mb-2">
-              Email Address
-            </label>
-
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-              className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-green-500"
-            />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-gray-300 mb-2">
-              Password
-            </label>
-
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter password"
-              required
-              className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-green-500"
-            />
-          </div>
-
-          {/* Role Selection */}
-          <div>
-            <label className="block text-gray-300 mb-2">
-              Select Role
-            </label>
-
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              required
-              className="w-full bg-slate-900 border border-white/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-green-500"
-            >
-              <option value="">Choose Role</option>
-              <option value="student">Student</option>
-              <option value="recruiter">Recruiter</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-
-          {/* Login Button */}
-          <button
-            type="submit"
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 rounded-xl hover:scale-105 transition-all duration-300"
-          >
-            Login
-          </button>
-
-        </form>
-
-        {/* Footer */}
-        <div className="text-center mt-6">
-          <p className="text-gray-400 text-sm">
-            Don't have an account?
-            <button
-              onClick={() => navigate("/")}  
-              className="text-green-400 hover:text-green-300 ml-1"
-            >
-              Register
-            </button>
-          </p>
-        </div>
-
-      </div>
-    </div>
-  </div>
-);};
 
 export default Login;
