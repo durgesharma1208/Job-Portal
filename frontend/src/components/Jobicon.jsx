@@ -4,7 +4,7 @@ import { Bookmark, BriefcaseBusiness, Clock, Info, MapPin, Send } from "lucide-r
 import { toast } from "react-hot-toast";
 import Button from "./ui/Button";
 import { Avatar, Badge } from "./ui/Kit";
-import api from "../lib/api";
+import api from "@/api/axios";
 
 const getStoredJobs = (key) => {
   try {

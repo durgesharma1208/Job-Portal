@@ -14,6 +14,9 @@ const LandingPage = lazy(() => import("./pages/LandingPage"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ChooseRole = lazy(() => import("./pages/ChooseRole"));
+const StudentProfileSetup = lazy(() => import("./pages/StudentProfileSetup"));
+const RecruiterProfileSetup = lazy(() => import("./pages/RecruiterProfileSetup"));
 const Home = lazy(() => import("./pages/Home"));
 const Jobs = lazy(() => import("./pages/Jobs"));
 const Search = lazy(() => import("./pages/Search"));
@@ -32,7 +35,7 @@ const ManageUsers = lazy(() => import("./pages/ManageUsers"));
 const AdminJobs = lazy(() => import("./pages/AdminJobs"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 
-const authFreeRoutes = ["/", "/login", "/register", "/forgot-password"];
+const authFreeRoutes = ["/", "/login", "/register", "/forgot-password", "/choose-role"];
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -66,6 +69,9 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/choose-role" element={<ChooseRole />} />
+              <Route path="/student/profile/setup" element={<StudentProfileSetup />} />
+              <Route path="/recruiter/profile/setup" element={<RecruiterProfileSetup />} />
 
               <Route element={<ProtectedRoute user={user} loading={loading} />}>
                 <Route path="/home" element={<Home />} />

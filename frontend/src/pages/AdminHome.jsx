@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BarChart3, BriefcaseBusiness, FileText, Flag, Settings, Users } from "lucide-react";
+import { ArrowRight, BarChart3, BriefcaseBusiness, FileText, Settings, Users } from "lucide-react";
 import Button from "../components/ui/Button";
 import { Badge, PageShell, SectionHeader, StatCard, staggerContainer } from "../components/ui/Kit";
 import { motion } from "framer-motion";

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { RotateCcw, Trash2, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "../components/ui/Button";
@@ -12,7 +12,7 @@ import {
   StatCard,
   TableShell,
 } from "../components/ui/Kit";
-import api from "../lib/api";
+import api from "@/api/axios";
 
 const roleTone = {
   admin: "rose",
@@ -25,25 +25,25 @@ const ManageUsers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
-
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await api.get("/user/allusers");
-      if (response.data.success) {
-        setUsers(response.data.users);
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to load users.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    let cancelled = false;
+    const controller = new AbortController();
+    api.get("/user/allusers", { signal: controller.signal })
+      .then((res) => {
+        if (!cancelled && res.data.success) setUsers(res.data.users);
+      })
+      .catch((err) => {
+        if (!cancelled && err.name !== "CanceledError") {
+          setError(err.response?.data?.message || "Failed to load users.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; controller.abort(); };
+  }, [refreshKey]);
 
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
@@ -76,7 +76,7 @@ const ManageUsers = () => {
         highlight="users"
         description="View, manage roles, and monitor user activity across the platform."
         actions={
-          <Button variant="secondary" leftIcon={RotateCcw} onClick={fetchUsers}>
+          <Button variant="secondary" leftIcon={RotateCcw} onClick={() => setRefreshKey((k) => k + 1)}>
             Refresh
           </Button>
         }

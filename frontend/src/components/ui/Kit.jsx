@@ -8,12 +8,14 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/cn";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const pageVariants = {
   initial: { opacity: 0, y: 14 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -10 },
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const staggerContainer = {
   animate: {
     transition: {
@@ -22,6 +24,7 @@ export const staggerContainer = {
   },
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const revealItem = {
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },

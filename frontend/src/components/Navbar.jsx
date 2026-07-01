@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Bell,
@@ -22,7 +22,7 @@ import {
 import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../context/ThemeContext";
-import api from "../lib/api";
+import api from "@/api/axios";
 import { cn } from "../lib/cn";
 import CommandPalette from "./CommandPalette";
 import { Avatar, Badge } from "./ui/Kit";
@@ -63,11 +63,13 @@ const IconButton = ({ children, className, ...props }) => (
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, setUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
+  const profileRef = useRef(null);
 
   const localUser = useMemo(() => {
     try {
@@ -80,6 +82,25 @@ const Navbar = () => {
   const activeUser = user || localUser || { name: "User", role: "student" };
   const role = activeUser.role || "student";
   const links = navigationByRole[role] || navigationByRole.student;
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setMobileOpen(false);
+    setProfileOpen(false);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [location.pathname]);
+
+  // Click-outside to close profile dropdown
+  useEffect(() => {
+    if (!profileOpen) return undefined;
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [profileOpen]);
 
   useEffect(() => {
     const openCommand = (event) => {
@@ -162,7 +183,7 @@ const Navbar = () => {
               {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
             </IconButton>
 
-            <div className="relative hidden md:block">
+            <div className="relative hidden md:block" ref={profileRef}>
               <button
                 type="button"
                 onClick={() => setProfileOpen((value) => !value)}
@@ -170,7 +191,7 @@ const Navbar = () => {
                 aria-haspopup="menu"
                 aria-expanded={profileOpen}
               >
-                <Avatar name={activeUser.name} className="size-8" />
+                <Avatar name={activeUser.name} src={activeUser.profileImage} className="size-8" />
                 <span className="max-w-28 truncate text-sm font-bold text-text">{activeUser.name || "User"}</span>
                 <ChevronDown className="size-4 text-text-muted" />
               </button>

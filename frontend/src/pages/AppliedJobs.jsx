@@ -12,7 +12,7 @@ import {
   StatCard,
   staggerContainer,
 } from "../components/ui/Kit";
-import api from "../lib/api";
+import api from "@/api/axios";
 import { motion } from "framer-motion";
 
 const getLocalAppliedJobs = () => {

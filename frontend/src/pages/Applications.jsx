@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Mail, Search, UserCheck, Users, BriefcaseBusiness, Bookmark } from "lucide-react";
+import { Mail, UserCheck, Users, BriefcaseBusiness, Bookmark } from "lucide-react";
 import Button from "../components/ui/Button";
 import {
   Alert,
@@ -12,7 +12,7 @@ import {
   SectionHeader,
   StatCard,
 } from "../components/ui/Kit";
-import api from "../lib/api";
+import api from "@/api/axios";
 
 const Applications = () => {
   const [users, setUsers] = useState([]);

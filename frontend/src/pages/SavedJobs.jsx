@@ -6,7 +6,7 @@ import JobDetailsModal from "./JobDetailsModal";
 import Button from "../components/ui/Button";
 import { EmptyState, PageShell, SectionHeader, SkeletonCard } from "../components/ui/Kit";
 import { useAuth } from "../hooks/useAuth";
-import api from "../lib/api";
+import api from "@/api/axios";
 
 const getLocalSavedJobs = () => {
   try {

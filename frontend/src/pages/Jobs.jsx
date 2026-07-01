@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BriefcaseBusiness, Filter, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
+import { Filter, RotateCcw, SlidersHorizontal } from "lucide-react";
 import Jobicon from "../components/Jobicon";
 import JobDetailsModal from "./JobDetailsModal";
 import Button from "../components/ui/Button";

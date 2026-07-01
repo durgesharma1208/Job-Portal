@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import jobsData from "../data/Jobsdata";
-import api from "../lib/api";
+import api from "@/api/axios";
 
 const normalizeJob = (job, index = 0) => ({
   ...job,
@@ -40,11 +40,12 @@ export const filterJobs = (jobs, { query = "", type = "All", level = "All", loca
   });
 };
 
-export const useJobs = () => {
+export const useJobs = ({ mine = false } = {}) => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [usingFallback, setUsingFallback] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let ignore = false;
@@ -55,7 +56,7 @@ export const useJobs = () => {
       setUsingFallback(false);
 
       try {
-        const response = await api.get("/job");
+        const response = await api.get(mine ? "/job/mine" : "/job");
         const data = Array.isArray(response.data) ? response.data : response.data?.jobs || [];
         if (!ignore) {
           setJobs(data.map(normalizeJob));
@@ -78,7 +79,10 @@ export const useJobs = () => {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [mine, refreshKey]);
+
+  const refresh = () => setRefreshKey((key) => key + 1);
+  const removeJob = (jobId) => setJobs((current) => current.filter((job) => job._id !== jobId));
 
   const meta = useMemo(() => {
     const types = ["All", ...new Set(jobs.map((job) => job.type).filter(Boolean))];
@@ -88,5 +92,5 @@ export const useJobs = () => {
     return { types, levels, locations };
   }, [jobs]);
 
-  return { jobs, loading, error, usingFallback, meta };
+  return { jobs, loading, error, usingFallback, meta, refresh, removeJob, setJobs };
 };

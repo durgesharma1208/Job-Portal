@@ -38,10 +38,7 @@ const CommandPalette = ({ open, onOpenChange, role = "student" }) => {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    if (!open) {
-      setQuery("");
-      return undefined;
-    }
+    if (!open) return undefined;
 
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {

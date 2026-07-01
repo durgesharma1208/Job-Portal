@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import {
-  BarChart3,
   BriefcaseBusiness,
   FileText,
   TrendingUp,

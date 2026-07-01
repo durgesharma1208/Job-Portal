@@ -5,7 +5,6 @@ import {
   BadgeCheck,
   BriefcaseBusiness,
   Building2,
-  CheckCircle2,
   Clock3,
   LineChart,
   Search,
@@ -281,7 +280,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      <section className="bg-text-strong px-4 py-20 text-bg sm:px-6">
+      <section className=" px-4 py-20 text-bg sm:px-6">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
             <Badge tone="green" className="border-white/15 bg-white/10 text-white">FAQ</Badge>

@@ -7,6 +7,13 @@ const roleAuth = (...roles) => {
       });
     }
 
+    if (!req.user.profileCompleted && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Please complete your profile first",
+      });
+    }
+
     next();
   };
 };

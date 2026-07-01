@@ -13,7 +13,7 @@ import {
 import Button from "../components/ui/Button";
 import { Avatar, Badge } from "../components/ui/Kit";
 import { toast } from "react-hot-toast";
-import api from "../lib/api";
+import api from "@/api/axios";
 
 const details = [
   { key: "location", label: "Location", icon: MapPin },
@@ -38,13 +38,9 @@ const getAppliedJobs = () => {
 
 const JobDetailsModal = ({ isOpen, onClose, job }) => {
   const [applying, setApplying] = useState(false);
-  const [isApplied, setIsApplied] = useState(false);
-
-  useEffect(() => {
-    if (job?._id) {
-      setIsApplied(getAppliedJobs().some((item) => item._id === job._id));
-    }
-  }, [job?._id, isOpen]);
+  const [isApplied, setIsApplied] = useState(
+    () => job?._id ? getAppliedJobs().some((item) => item._id === job._id) : false
+  );
 
   useEffect(() => {
     if (!isOpen) return undefined;

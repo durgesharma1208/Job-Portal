@@ -17,7 +17,7 @@ import { useJobs } from "../hooks/useJobs";
 const AdminJobs = () => {
   const { jobs, loading, error, usingFallback } = useJobs();
 
-  const handleDelete = (jobId) => {
+  const handleDelete = () => {
     toast.success("Job removed (demo — connect backend for live delete)");
   };
 
